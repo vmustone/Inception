@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: ./requirements/nginx
+      dockerfile: Dockerfile
+    image: nginx-image
+    container_name: nginx
+    depends_on:
+      - wordpress
+    networks:
+      - vnet
+    ports:
+      - "443:443"
+    volumes:
+      - wordpress_data:/var/www/html
+    restart: always
+    env_file:
+      - ./.env
+
+  mariadb:
+    build:
+      context: ./requirements/mariadb
+      dockerfile: Dockerfile
+    image: mariadb-image
+    container_name: mariadb
+    env_file:
+      - ./.env
+    restart: always
+    networks:
+      - vnet
+    volumes:
+      - mariadb_data:/var/lib/mysql
+
+  wordpress:
+    build:
+      context: ./requirements/wordpress/
+      dockerfile: Dockerfile
+    image: wordpress-image
+    container_name: wordpress
+    depends_on:
+      - mariadb
+    env_file:
+      - ./.env
+    networks:
+      - vnet
+    restart: always
+    volumes:
+      - wordpress_data:/var/www/html
+
+networks:
+  vnet:
+    name: vnet
+
+volumes:
+  wordpress_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/ville/data/wordpress_data
+  mariadb_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /home/ville/data/mariadb_data
